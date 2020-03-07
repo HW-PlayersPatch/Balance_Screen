@@ -217,8 +217,6 @@ function GameBalanceScreenOnUpdate()
 			if (fightFiveIndex == 4) then
 				if (bMirror == 0) then
 					bMirror = 1
-				else
-					bMirror = 0
 				end
 			end
 			if (fightFiveIndex == 5) then
@@ -687,7 +685,15 @@ end
 
 function RespawnLast(mirror, no_msg)
 	if (getn(reports) ~= nil) then
-		local setup = reports[1]
+		local setup_index = fightFiveId
+		if (mod(setup_index, 2) == 0) then
+			setup_index = setup_index - 1
+		end
+		print("ff id: " .. fightFiveId)
+		print("si.1: " .. setup_index)
+		setup_index = (((setup_index + 1) / 2) - 1) * 10 + 1
+		print("si.2: " .. setup_index)
+		local setup = reports[setup_index]
 
 		for player_name, ships in setup.ships do
 			local name = player_name
@@ -727,4 +733,6 @@ end
 function TestSuite()
 	bFightFive = 1
 	fightFiveIndex = 0
+	bMirror = 0
+	fightFiveId = fightFiveId + 1
 end
