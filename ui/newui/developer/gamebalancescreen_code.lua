@@ -130,9 +130,7 @@ ships = {
 reports = {}
 ----------------------- ON SHOW -----------------------
 function GameBalanceScreenOnShow()
-	round(1.2)
-
-	if(bLoaded==1) then		
+	if (bLoaded==1) then		
 		return
 	end
 
@@ -149,7 +147,7 @@ function GameBalanceScreenOnShow()
 	SobGroup_Clear("enemySob")
 
 	local firstplayer = 0
-	for i = 0,5,1 do		
+	for i = 0,5,1 do
 			if SobGroup_Empty("Player_Ships"..i) == 0 then
 					firstplayer = i
 					break
@@ -167,8 +165,8 @@ function GameBalanceScreenOnShow()
 	Volume_AddSphere("battle",{0,0,0,},2000)
 
 	for i = 1,50,1 do
-		Volume_AddSphere("player"..i,{random(-1500,1500),random(-750,750),random(2600,3000),},2000)
-		Volume_AddSphere("enemy"..i,{random(-1500,1500),random(-750,750),-random(2600,3000),},2000)
+		Volume_AddSphere("player"..i,{random(4000,4400),random(-750,750),random(-1500,1500),},2000)
+		Volume_AddSphere("enemy"..i,{-random(4000,4400),random(-750,750),random(-1500,1500),},2000)
 	end		
 
 	SobGroup_Create("squadenemy")
