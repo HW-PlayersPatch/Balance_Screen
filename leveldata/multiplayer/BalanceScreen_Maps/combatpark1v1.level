@@ -32,7 +32,7 @@ function DetermChunk()
 	addSquadron("Hgn_MotherShip", "Hgn_MotherShip",	{40000, 0, 0},	0, {0.000, -90.000, 0.000},0,0)
 	addSquadron("Vgr_MotherShip", "Vgr_MotherShip",	{-40000, 0, 0},	1, {0.000, 90.000, 0.000},0,0)
 
-	setWorldBoundsInner({0.00, 0.00, 0.00}, {99000.00, 99000.00, 99000.00})
+	setWorldBoundsInner({0.00, 0.00, 0.00}, {90906.68, 90906.68, 90906.68})
 
 end -- end of deterministic function
 
@@ -42,8 +42,7 @@ function NonDetermChunk()
 	setGlareIntensity(0.000000)
 	setLevelShadowColour(0.000000, 0.000000, 0.000000, 1.0)
 	loadBackground("ez02")
-	setSensorsManagerCameraDistances(12000,60000)
+	setSensorsManagerCameraDistances(0,60000)
 	--setDefaultMusic("Data:sound/music/M04.PAT")
-	--setDefaultMusic("Data_sound/music/AMBIENT/A08_Mission10")
 
 end -- end of nondeterm function
