@@ -1,0 +1,49 @@
+--  hw2 level exporter generated file
+--=============================================================================
+--  Name    : E3_CombatPark.level
+--  Purpose : Automatically generated level file by the level exporter.
+--  Created Friday, May 23, 2003 by the level exporter.
+--  Copyright Relic Entertainment, Inc.  All rights reserved.
+--=============================================================================
+
+levelDesc = "Developer Combat Park v3"
+maxPlayers = 2;
+testMap = 1
+
+player = {};
+
+player[0] = {
+	id = 0,
+	name = "",
+	resources = 999000,
+	raceName = "Hiigaran",
+	startPos = 0,
+}
+
+player[1] = {
+	id = 1,
+	name = "",
+	resources = 0,
+	raceName = "Hiigaran",
+	startPos = 0,
+}
+
+function DetermChunk()
+	addSquadron("Hgn_MotherShip", "Hgn_MotherShip",	{40000, 0, 0},	0, {0.000, -90.000, 0.000},0,0)
+	addSquadron("Vgr_MotherShip", "Vgr_MotherShip",	{-40000, 0, 0},	1, {0.000, 90.000, 0.000},0,0)
+
+	setWorldBoundsInner({0.00, 0.00, 0.00}, {99000.00, 99000.00, 99000.00})
+
+end -- end of deterministic function
+
+function NonDetermChunk()
+
+	fogSetActive(0)
+	setGlareIntensity(0.000000)
+	setLevelShadowColour(0.000000, 0.000000, 0.000000, 1.0)
+	loadBackground("ez02")
+	setSensorsManagerCameraDistances(12000,60000)
+	--setDefaultMusic("Data:sound/music/M04.PAT")
+	--setDefaultMusic("Data_sound/music/AMBIENT/A08_Mission10")
+
+end -- end of nondeterm function

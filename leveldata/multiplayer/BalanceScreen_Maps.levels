@@ -17,8 +17,8 @@ Tags = "dm,hw2,dm_hw2,hw1,dm_hw1,balance"
 LevelList = {
 	{
 		Tags = "2p",
-		Name = "combatpark1v1-V2",
-		Desc = "Developer Combat Park V2",
+		Name = "combatpark1v1 v3",
+		Desc = "Developer Combat Park v3",
 		MaxPlayers = 2,
 	},
 }
