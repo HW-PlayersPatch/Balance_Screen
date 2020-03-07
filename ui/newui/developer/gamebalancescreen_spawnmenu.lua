@@ -838,6 +838,118 @@ BALANCE_SPAWNMENU={
 					},
 
 				},
+				{
+					type = "Frame",		
+					Layout = {	
+						pad_RB  = { r = 0, b = 8, rr = "px", br = "px" },
+						size_WH = {	w = 1, h=1 ,wr = "par", hr="px"},	
+						--pos_XY = { x = 1, y = 0, xr = "par", yr = "px" },
+						--pivot_XY = {1, 0.0},
+						--Flags = { hasVolume=0 },	
+					},	
+
+					arrangeSep = {	x=8, y=8, xr="px", yr="px",},
+					name = "frame_LeftTabs",
+					arrangetype = "horiz",
+					autosize  = 1,
+					;
+					-- RespawnLastButton
+					{
+						type = "TextButton",
+						name = "RespawnLastButton",
+
+						autosize=1,
+						Layout = {	
+							size_WH = {	w = .48, h = 2, wr = "par", hr = "px" },								
+						},
+			
+						buttonStyle = "FEButtonStyle1_Alert_Outlined_Chipped",			
+					
+						Text = {
+							text = "Respawn Last",
+							rel = 1080,
+							minShrink = 0.25,
+						},
+						onMouseClicked = "RespawnLast()",	
+					
+					},
+					-- ResetToLastButton
+					{
+						type = "TextButton",
+						name = "ResetToLastButton",
+
+						autosize=1,
+						Layout = {	
+							size_WH = {	w = .48, h = 2, wr = "par", hr = "px" },								
+						},
+			
+						buttonStyle = "FEButtonStyle1_Alert_Outlined_Chipped",			
+					
+						Text = {
+							text = "Reset To Last",
+							rel = 1080,
+							minShrink = 0.25,
+						},
+						onMouseClicked = "ResetToLast()",	
+					
+					},
+				},
+				{
+					type = "Frame",		
+					Layout = {	
+						pad_RB  = { r = 0, b = 8, rr = "px", br = "px" },
+						size_WH = {	w = 1, h=1 ,wr = "par", hr="px"},	
+						--pos_XY = { x = 1, y = 0, xr = "par", yr = "px" },
+						--pivot_XY = {1, 0.0},
+						--Flags = { hasVolume=0 },	
+					},	
+
+					arrangeSep = {	x=8, y=8, xr="px", yr="px",},
+					name = "frame_LeftTabs",
+					arrangetype = "horiz",
+					autosize  = 1,
+					;
+					-- TestFiveButton
+					-- {
+					-- 	type = "TextButton",
+					-- 	name = "TestFiveButton",
+
+					-- 	autosize=1,
+					-- 	Layout = {	
+					-- 		size_WH = {	w = 1, h = 2, wr = "par", hr = "px" },								
+					-- 	},
+			
+					-- 	buttonStyle = "FEButtonStyle1_Alert_Outlined_Chipped",			
+					
+					-- 	Text = {
+					-- 		text = "Test Five Times",
+					-- 		rel = 1080,
+					-- 		minShrink = 0.25,
+					-- 	},
+					-- 	onMouseClicked = "RunSetupFiveTimes()",	
+					
+					-- },
+					-- Mirror 5
+					{
+						type = "TextButton",
+						name = "TestFiveButton",
+
+						autosize=1,
+						Layout = {	
+							size_WH = {	w = 1, h = 2, wr = "par", hr = "px" },								
+						},
+			
+						buttonStyle = "FEButtonStyle1_Alert_Outlined_Chipped",			
+					
+						Text = {
+							text = "Test Five + Mirror",
+							rel = 1080,
+							minShrink = 0.25,
+						},
+						onMouseClicked = "TestSuite()",	
+					
+					},
+				}
 			},
 
 
@@ -1066,7 +1178,4 @@ BALANCE_SPAWNMENU={
 
 
 		},
-
-
-
 	}

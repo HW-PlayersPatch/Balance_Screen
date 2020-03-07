@@ -1,3 +1,109 @@
+function round(num, numDecimalPlaces)
+	local mult = 10^(numDecimalPlaces or 0)
+	return floor(num * mult + 0.5) / mult
+end
+
+function _printTbl(tbl, indent)
+	if (indent == nil) then
+		indent = 0
+	end
+	local indent_str = ""
+	if (indent > 0) then
+		local cur_indents = 0
+		while (cur_indents ~= indent) do
+			indent_str = indent_str .. "\t"
+			cur_indents = cur_indents + 1
+		end
+	end
+	for k, v in tbl do
+		if type(v) == "table" then
+			print(indent_str .. "\"" .. k .. "\": {")
+			_printTbl(v, indent + 1, self)
+			print(indent_str .. "},")
+		else
+			if (type(v) ~= "number") then
+				v = "\"" .. tostring(v) .. "\""
+			end
+			print(indent_str .. "\"" .. k .. "\": " .. v .. ',')
+		end
+	end
+end
+
+function printTbl(tbl, label)
+	if (label == nil) then
+		label = tostring(tbl)
+	end
+	local temp_tbl = {}
+	temp_tbl[label] = tbl
+	_printTbl(temp_tbl)
+end
+
+function filter(table, predicate)
+	local out = {}
+	for i, v in table do
+		if (predicate(v, i, table)) then
+			out[i] = v
+		end
+	end
+	return out
+end
+
+function map(table, transform)
+	local out = {}
+	for i, v in table do
+		out[i] = transform(v, i, table)
+	end
+	return out
+end
+
+function reduce(table, accumulator, initial_value)
+	local out = initial_value
+	for i, v in table do
+		out = accumulator(out, v, i, table)
+	end
+	return out
+end
+
+function merge(tbl_a, tbl_b, merger)
+	if (tbl_a == nil and tbl_b ~= nil) then
+		return tbl_b
+	elseif (tbl_a ~= nil and tbl_b == nil) then
+		return tbl_a
+	elseif (tbl_b == nil and tbl_b == nil) then
+		return {}
+	end
+	local out = tbl_a
+	for k, v in tbl_b do
+		if (out[k] == nil) then
+			out[k] = v
+		else
+			out[k] = merger(out[k], tbl_b[k])
+		end
+	end
+	return out
+end
+
+function includesValue(table, value)
+	for i, v in table do
+		if v == value then
+			return true
+		end
+	end
+	return false
+end
+
+function includesKey(table, value)
+	for i, v in table do
+		if i == value then
+			return true
+		end
+	end
+	return false
+end
+
+-- ===================================
+
+
 
 activeraceListbox = "hgn_listbox"
 P1BuildCost = 0
@@ -8,8 +114,23 @@ P2BuildTime = 0
 P2RunningHealth = 0
 bLoaded = 0
 bInstaFight = 0
+-- playerspatch
+bFighting = 0
+bFightFive = 0
+fightFiveId = 0
+fightFiveIndex = 0
+fightIndex = 0
+shipIndex = 0
+internalFightTimer = 0
+bMirror = 0
+ships = {
+	enemy = {},
+	player = {}
+}
+reports = {}
 ----------------------- ON SHOW -----------------------
 function GameBalanceScreenOnShow()
+	round(1.2)
 
 	if(bLoaded==1) then		
 		return
@@ -56,57 +177,305 @@ function GameBalanceScreenOnShow()
 end
 ------------------------------------------------
 function GameBalanceScreenOnUpdate()
-
 	local playershipcount = SobGroup_Count("squadplayer")
 	local enemyshipcount = SobGroup_Count("squadenemy")	
 	UI_SetTextLabelText("GameBalanceScreen", "PlayerCount", ""..playershipcount);
 	UI_SetTextLabelText("GameBalanceScreen", "EnemyCount", ""..enemyshipcount);
+
+	if (SobGroup_InStrikeGroup("squadenemy")) then
+		SobGroup_FormStrikeGroup("squadenemy", "none")
+	end
 	
 	local playershiphealth = SobGroup_CurrentHealthTotal("squadplayer")
 	local enemyshiphealth = SobGroup_CurrentHealthTotal("squadenemy")	
 	UI_SetTextLabelText("GameBalanceScreen", "Player1RunningHealth", ""..playershiphealth);
 	UI_SetTextLabelText("GameBalanceScreen", "Player2RunningHealth", ""..enemyshiphealth);
+
+	if (bFightFive == 1) then
+		-- print("flag: " .. tostring(bFightFive) .. " | index: " .. tostring(fightFiveIndex))
+		-- print("\t" .. tostring(bFighting))
+		if (bFighting == 0) then
+			print("GO AGAIN")
+			InstaFight(1)
+		end
+	end
 	
 	if playershipcount == 0 or enemyshipcount == 0 then
+		ReportFight()
 		UI_TimerStop("GameBalanceScreen", "BalanceFightTimer")
-
 		if bInstaFight == 1 then
 			SetTurboSpeed(1)
 			bInstaFight = 0
 		end
-
+		if (fightFiveIndex == 9 and bFightFive == 1) then
+			bFightFive = 0
+		end
+		if (bFightFive == 1 and getn(reports) > 0) then
+			ResetToLast(bMirror, 1)
+			fightFiveIndex = fightFiveIndex + 1
+			print("ff: " .. fightFiveIndex)
+			if (fightFiveIndex == 4) then
+				if (bMirror == 0) then
+					bMirror = 1
+				else
+					bMirror = 0
+				end
+			end
+			if (fightFiveIndex == 5) then
+				fightFiveId = fightFiveId + 1
+			end
+		end
 	end
+end
 
+
+
+function ReportFight()
+	if (bFighting == 1) then
+		bFighting = 0
+		local this_report = {
+			time = {},
+			ships = {}
+		}
+		if (bFightFive == 1) then
+			this_report.group = fightFiveId
+		end
+		local endTime = Universe_GameTime()
+		-- print("=== BEGIN BALANCESCREEN BATTLE REPORT ===")
+		-- print("Start: " .. internalFightTimer)
+		this_report.time.start = internalFightTimer
+		-- print("End: " .. endTime)
+		this_report.time.finish = endTime
+		-- print("Took " .. endTime - internalFightTimer .. "s")
+		this_report.time.total = endTime - internalFightTimer
+		for player, ship_list in ships do
+			-- print(player .. " ships:")
+			this_report.ships[player] = {
+				initial = {},
+			}
+			for index, ship in ship_list do
+				-- print("\t" .. index .. ": " .. ship.type)
+				this_report.ships[player].initial[index] = {
+					type = ship.type,
+					cost = SobGroup_GetStaticF(ship.type, "buildCost"),
+					time = SobGroup_GetStaticF(ship.type, "buildTime")
+				}
+				-- print(ship.group)
+				-- print(SobGroup_Count(ship.group))
+				if (SobGroup_Count(ship.group) > 0) then
+					if (this_report.ships[player].survived == nil) then
+						this_report.ships[player].survived = {}
+					end
+					this_report.ships[player].survived[index] = {
+						type = ship.type,
+						hp = SobGroup_HealthPercentage(ship.group) * 100,
+						cost = SobGroup_GetStaticF(ship.type, "buildCost"),
+						time = SobGroup_GetStaticF(ship.type, "buildTime")
+					}
+				end
+			end 
+		end
+		reports[getn(reports) + 1] = this_report
+		-- print("=== END BALANCESCREEN BATTLE REPORT ===")
+		ships = {
+			enemy = {},
+			player = {}
+		}
+	end
 end
 ------------------------------------------------
+
+function PrintReport(index, report)
+	print("\n-- as json:")
+	printTbl(report)
+	print("--\n\n")
+	print("\nBattle [" .. index .. "]:")
+	print("Took " .. report.time.total .. "s")
+	for k, player in report.ships do
+		print(k)
+		for k, ship_cat in player do
+			print("\t" .. k)
+			local ship_tallies = reduce(ship_cat, function (acc, ship_details)
+				if (acc[ship_details.type] ~= nil) then
+					local count_total = acc[ship_details.type].count + 1
+					local hp_total = nil
+					local cost_total = acc[ship_details.type].cost + ship_details.cost
+					local time_total = acc[ship_details.type].cost + ship_details.time
+					if (ship_details.hp ~= nil) then
+						hp_total = acc[ship_details.type].hp + ship_details.hp
+					end
+					acc[ship_details.type] = {
+						count = count_total,
+						hp = hp_total,
+						cost = cost_total,
+						time = time_total
+					}
+				else
+					local this_hp = nil
+					if (ship_details.hp ~= nil) then
+						this_hp = ship_details.hp
+					end
+					acc[ship_details.type] = {
+						count = 1,
+						hp = this_hp,
+						cost = ship_details.cost,
+						time = ship_details.time
+					}
+				end
+				return acc
+			end, {})
+			for ship_type, details in ship_tallies do
+				local hp_str = ""
+				if (details.hp ~= nil) then
+					hp_str = ": " .. round((details.hp / details.count), 2) .. "%% HP"
+				end
+				print("\t\t" .. ship_type .. " (x" .. details.count .. ")" .. hp_str)
+			end
+		end
+	end
+end
+
+function PrintCompiledReports()
+	local grouped = reduce(reports, function (acc, report)
+		if (acc[report.group] == nil) then
+			acc[report.group] = {
+				time_totals = {},
+				ships = {}
+			}
+		end
+		-- record time total...
+		local time_total_index = getn(acc[report.group].time_totals) + 1
+		acc[report.group].time_totals[time_total_index] = report.time.total
+		--- record ships...
+		local ships_index = getn(acc[report.group].ships) + 1
+		acc[report.group].ships[ships_index] = report.ships
+		return acc
+	end, {})
+	-- printTbl(grouped)
+	for k, battle in grouped do
+		local sorted_times = battle.time_totals
+		sort(sorted_times)
+		local compiled = {
+			index = k,
+			time = {
+				average = reduce(battle.time_totals, function (acc, t) return acc + t end, 0) / getn(battle.time_totals),
+				min = sorted_times[1],
+				max = sorted_times[getn(sorted_times)],
+				range = sorted_times[getn(sorted_times)] - sorted_times[1]
+			},
+			ship_averages = reduce(battle.ships, function (acc, battle)
+				local uniqueSurvivorCounts = function(who, status_type)
+					if (%battle[who][status_type] ~= nil) then
+						return reduce(%battle[who][status_type], function (acc, ship_details)
+							if (acc[ship_details.type] == nil) then
+								acc[ship_details.type] = 1
+							else
+								acc[ship_details.type] = acc[ship_details.type] + 1
+							end
+							return acc
+						end, {})
+					else
+						return {}
+					end
+				end
+				local merger = function (a, b)
+					return a + b
+				end
+
+				local maybeAddWin = function(player)
+					local count = 0
+					for k, v in %uniqueSurvivorCounts(player, "survived") do -- lua is really stupid
+						count = count + 1
+						break; -- sigh
+					end
+					if (count > 0) then
+						return 1
+					end
+					return 0
+				end
+
+				acc.player = {
+					initial = merge(acc.player.initial, uniqueSurvivorCounts("player", "initial"), merger),
+					survived = merge(acc.player.survived, uniqueSurvivorCounts("player", "survived"), merger),
+					wins = acc.player.wins + maybeAddWin("player")
+				}
+				-- printTbl(acc.player)
+				acc.enemy = {
+					initial = merge(acc.enemy.initial, uniqueSurvivorCounts("enemy", "initial"), merger),
+					survived = merge(acc.enemy.survived, uniqueSurvivorCounts("enemy", "survived"), merger),
+					wins = acc.enemy.wins + maybeAddWin("enemy")
+				}
+				return acc
+			end, {
+				player = {
+					initial = {},
+					survived = {},
+					wins = 0
+				},
+				enemy = {
+					initial = {},
+					survived = {},
+					wins = 0
+				}
+			}),
+		}
+		compiled.ship_averages = map(compiled.ship_averages, function (player)
+			local test_count = getn(%battle.ships)
+			local toAverageCount = function (ship_count, ship_type)
+				return (ship_count * SobGroup_GetStaticF(ship_type, "buildBatch")) / %test_count
+			end
+			player.survived = map(player.survived, toAverageCount)
+			player.initial = map(player.initial, toAverageCount)
+			return player
+		end)
+		printTbl(compiled, "Test " .. k)
+	end
+end
+
 function GameBalanceScreenOnHide()
+	print("\n\n=== REPORTS DUMP ===")
+	-- for i, v in reports do
+	-- 	PrintReport(i, v)
+	-- end
+	PrintCompiledReports()
 	print("LUA: Balance Screen Unloading")
 	bLoaded = 0
 end
 
 ----------------------- SPAWN UNIT -----------------------
-function SpawnUnitFromDropdownListBoxSelection(_side, _playerID, _count, _formation)
+function SpawnUnitFromDropdownListBoxSelection(_side, _playerID, _count, _formation, _ship, no_msg)
 	-- _side is either "player" or "enemy"
 	-- _playerID is either 0=player or 1=enemy
 
-
-	local shipType = UI_GetDropdownListBoxSelectedCustomDataString("GameBalanceScreen",activeraceListbox)
+	local shipType
+	if (_ship ~= nil) then
+		shipType = _ship.type
+	else
+		shipType = UI_GetDropdownListBoxSelectedCustomDataString("GameBalanceScreen",activeraceListbox)
+	end
 	SobGroup_Clear("tempSob")
 
 	for i = 1,_count do 
-	local r = random(1,50)
+		local r = random(1,50)
 		-- Create the ship in volume _side..r
-		SobGroup_SpawnNewShipInSobGroup(_playerID, shipType , _side, 'tempSob', _side..r)	
-		
+		local this_ship_group = _side .. "_" .. shipType .. "_" .. fightIndex .. "_" .. shipIndex
+		shipIndex = shipIndex + 1
+		SobGroup_CreateIfNotExist(this_ship_group)
+		SobGroup_SpawnNewShipInSobGroup(_playerID, shipType , _side, this_ship_group, _side .. r)
+		ships[_side][getn(ships[_side]) + 1] = {
+			type = shipType,
+			group = this_ship_group
+		}
+
 		-- Add _side.."Sob" to active list of ships to keep count of (squad*)
-		SobGroup_SobGroupAdd(_side.."Sob", 'tempSob')	
+		SobGroup_SobGroupAdd(_side.."Sob", this_ship_group)	
 		SobGroup_SobGroupAdd("squad".._side, _side.."Sob")		
 	end 
 
 	SobGroup_SelectSobGroup('tempSob')
 
 	--SobGroup_FormStrikeGroup('tempSob','delta')
-	--SobGroup_FormStrikeGroup('tempSob','x')
+	--SobGroup_FormStrikeGroup('tempSob','x')#
 	--SobGroup_FormStrikeGroup('tempSob','broad')
 	--SobGroup_FormStrikeGroup('tempSob','movers')
 	--SobGroup_FormStrikeGroup('tempSob','wall')
@@ -116,8 +485,9 @@ function SpawnUnitFromDropdownListBoxSelection(_side, _playerID, _count, _format
 		--SobGroup_SetFixed('tempSob',1)
 	end
 
-
-	Subtitle_Message(_side.."Spawning ".. _count.. " ".. shipType, 5)
+	if (no_msg == nil) then
+		Subtitle_Message(_side.."Spawning ".. _count.. " ".. shipType, 5)
+	end
 	
 
 	-- Added now that the switch player debug option is available
@@ -161,30 +531,44 @@ function ShowRaceListbox(listbox)
 
 end
 ---------------------------------------------------------------------
-function Fight()
+function BeginTrackingFight()
+	fightIndex = fightIndex + 1
+	internalFightTimer = Universe_GameTime()
+	bFighting = 1
+end
+
+function Fight(no_msg)
 	SobGroup_Attack(0, "squadplayer", "squadenemy")
 	--SobGroup_AbilityActivate("squadenemy", AB_Move, 1)
-	SobGroup_Attack(1, "squadenemy", "squadplayer")			
-	Subtitle_Message("Fight!", 5)
+	SobGroup_Attack(1, "squadenemy", "squadplayer")
+	BeginTrackingFight()
+	if (no_msg == nil) then
+		Subtitle_Message("Fight!", 5)
+	end
 	UI_TimerStart("GameBalanceScreen", "BalanceFightTimer")
 end
 
-function InstaFight()
+function InstaFight(no_msg)
 	bInstaFight = 1
 	SetTurboSpeed(64)
 	SobGroup_Attack(0, "squadplayer", "squadenemy")
 	--SobGroup_AbilityActivate("squadenemy", AB_Move, 1)
-	SobGroup_Attack(1, "squadenemy", "squadplayer")			
-	Subtitle_Message("Insta-Fight!", 5)
+	SobGroup_Attack(1, "squadenemy", "squadplayer")
+	BeginTrackingFight()
+	if (no_msg == nil) then
+		Subtitle_Message("Insta-Fight!", 5)
+	end
 	UI_TimerStart("GameBalanceScreen", "BalanceFightTimer")
 
 end
 
 
-function DestroyAll()
+function DestroyAll(no_msg)
 	SobGroup_TakeDamage("squadplayer", 1)		
-	SobGroup_TakeDamage("squadenemy", 1)		
-	Subtitle_Message("Destroy!", 5)
+	SobGroup_TakeDamage("squadenemy", 1)
+	if (no_msg) then	
+		Subtitle_Message("Destroy!", 5)
+	end
 	P1BuildCost = 0
 	P1BuildTime = 0
 	P2BuildCost = 0
@@ -192,7 +576,6 @@ function DestroyAll()
 
 	bInstaFight = 0
 	SetTurboSpeed(1)
-	InstaFight = 0
 
 	UI_SetTextLabelText("GameBalanceScreen", "Player1BuildCost", P1BuildCost);
 	UI_SetTextLabelText("GameBalanceScreen", "Player1BuildTime", P1BuildTime);
@@ -200,6 +583,8 @@ function DestroyAll()
 	UI_SetTextLabelText("GameBalanceScreen", "Player2BuildTime", P2BuildTime);
 	UI_TimerReset("GameBalanceScreen", "BalanceFightTimer")
 	UI_TimerStop("GameBalanceScreen", "BalanceFightTimer")
+	ships.player = {}
+	ships.enemy = {}
 end
 
 function DestroyPlayer()
@@ -211,17 +596,21 @@ function DestroyPlayer()
 	UI_SetTextLabelText("GameBalanceScreen", "Player1BuildTime", P1BuildTime);
 	UI_TimerReset("GameBalanceScreen", "BalanceFightTimer")
 	UI_TimerStop("GameBalanceScreen", "BalanceFightTimer")
+	ships.player = {}
 end
 
-function DestroyEnemy()
-	SobGroup_TakeDamage("squadenemy", 1)		
-	Subtitle_Message("Destroy Enemy!", 5)
+function DestroyEnemy(no_msg)
+	SobGroup_TakeDamage("squadenemy", 1)
+	if (no_msg == nil) then		
+		Subtitle_Message("Destroy Enemy!", 5)
+	end
 	P2BuildCost = 0
 	P2BuildTime = 0
 	UI_SetTextLabelText("GameBalanceScreen", "Player2BuildCost", P2BuildCost);
 	UI_SetTextLabelText("GameBalanceScreen", "Player2BuildTime", P2BuildTime);
 	UI_TimerReset("GameBalanceScreen", "BalanceFightTimer")
 	UI_TimerStop("GameBalanceScreen", "BalanceFightTimer")
+	ships.enemy = {}
 end
 
 
@@ -292,4 +681,50 @@ function SwapSides()
 	end
 
 
+end
+
+--- playerspatch
+
+function RespawnLast(mirror, no_msg)
+	if (getn(reports) ~= nil) then
+		local setup = reports[1]
+
+		for player_name, ships in setup.ships do
+			local name = player_name
+			if (mirror == 1) then
+				print("really mirror")
+				if (player_name == 'player') then
+					name = 'enemy'
+				else
+					name = 'player'
+				end
+			end
+			local player_index = function (name)
+				if (name == 'player') then
+					return 0
+				end
+				return 1
+			end
+			for index, ship in ships.initial do
+				print("spawn " .. ship.type .. " for " .. name)
+				SpawnUnitFromDropdownListBoxSelection(name, player_index(name), 1, nil, ship, no_msg)
+			end
+		end
+	end
+	if (no_msg == nil) then
+		Subtitle_Message("Respawn previous configuration", 3)
+	end
+end
+
+function ResetToLast(mirror, no_msg)
+	DestroyAll(no_msg)
+	RespawnLast(mirror, no_msg)
+	if (no_msg == nil) then
+		Subtitle_Message("Reset to previous configuration", 3)
+	end
+end
+
+function TestSuite()
+	bFightFive = 1
+	fightFiveIndex = 0
 end
