@@ -6,7 +6,7 @@
 --  Copyright Relic Entertainment, Inc.  All rights reserved.
 --=============================================================================
 
-levelDesc = "Developer Combat Park v3"
+levelDesc = "Developer Combat Park"
 maxPlayers = 2;
 testMap = 1
 
