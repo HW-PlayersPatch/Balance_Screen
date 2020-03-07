@@ -165,8 +165,8 @@ function GameBalanceScreenOnShow()
 	Volume_AddSphere("battle",{0,0,0,},2000)
 
 	for i = 1,50,1 do
-		Volume_AddSphere("player"..i,{random(3500,3900),random(-750,750),random(-1500,1500),},2000)
-		Volume_AddSphere("enemy"..i,{-random(3500,3900),random(-750,750),random(-1500,1500),},2000)
+		Volume_AddSphere("player"..i,{-random(3500,3900),random(-750,750),random(-1500,1500),},2000)
+		Volume_AddSphere("enemy"..i,{random(3500,3900),random(-750,750),random(-1500,1500),},2000)
 	end		
 
 	SobGroup_Create("squadenemy")

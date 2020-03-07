@@ -29,8 +29,8 @@ player[1] = {
 }
 
 function DetermChunk()
-	addSquadron("Hgn_MotherShip", "Hgn_MotherShip",	{40000, 0, 0},	0, {0.000, -90.000, 0.000},0,0)
-	addSquadron("Vgr_MotherShip", "Vgr_MotherShip",	{-40000, 0, 0},	1, {0.000, 90.000, 0.000},0,0)
+	addSquadron("Hgn_MotherShip", "Hgn_MotherShip",	{-40000, 0, 0},	0, {0.000, 90.000, 0.000},0,0)
+	addSquadron("Vgr_MotherShip", "Vgr_MotherShip",	{40000, 0, 0},	1, {0.000, -90.000, 0.000},0,0)
 
 	setWorldBoundsInner({0.00, 0.00, 0.00}, {90906.68, 90906.68, 90906.68})
 
