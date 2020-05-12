@@ -128,6 +128,7 @@ ships = {
 	player = {}
 }
 reports = {}
+maxIndex = 9
 ----------------------- ON SHOW -----------------------
 function GameBalanceScreenOnShow()
 	if (bLoaded==1) then		
@@ -205,7 +206,7 @@ function GameBalanceScreenOnUpdate()
 			SetTurboSpeed(1)
 			bInstaFight = 0
 		end
-		if (fightFiveIndex == 9 and bFightFive == 1) then
+		if (fightFiveIndex == maxIndex and bFightFive == 1) then
 			bFightFive = 0
 		end
 		if (bFightFive == 1 and getn(reports) > 0) then
@@ -728,7 +729,14 @@ function ResetToLast(mirror, no_msg)
 	end
 end
 
-function TestSuite()
+function TestSuite(flag)
+	print("f: " .. flag)
+	maxIndex = 0
+	if (flag == 1) then -- test 10
+		maxIndex = 9
+	elseif (flag == 0 or flag == nil) then
+		maxIndex = 4
+	end
 	bFightFive = 1
 	fightFiveIndex = 0
 	bMirror = 0
