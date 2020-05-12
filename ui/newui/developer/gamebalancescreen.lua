@@ -48,7 +48,7 @@ GameBalanceScreen = {
 		Layout = {					
 			pos_XY = { x = 0.05, y = .05, xr = "scr", yr = "scr" },
 			pad_RB  = { r = 0, b = 0, rr = "px", br = "px" },
-			size_WH = {	w = 640, h = 530, wr = "px", hr = "px" },	
+			size_WH = {	w = 640, h = 600, wr = "px", hr = "px" },	
 			--max_WH = {	w = .42, wr = "scr" },
 			--min_WH = {	w = .42, wr = "scr" },
 		},
@@ -63,7 +63,7 @@ GameBalanceScreen = {
 			Layout = {
 				--pivot_XY = { 0.5, 0.5 },					
 				--pos_XY = {	x=0.5, y=0.5, xr="par", yr="par",},			
-				size_WH = {	w = 1, h = 400, wr = "par", hr = "px" },	
+				size_WH = {	w = 1, h = 470, wr = "par", hr = "px" },	
 			},		
 
 			--autosize=1,
